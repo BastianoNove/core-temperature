@@ -1,9 +1,31 @@
 #include <stdio.h>
 #include <unistd.h>
 
-TCPClient client;
+#include "pb_encode.h"
+#include "pb_decode.h"
+#include "temperature.pb.h"
+
+#define aref_voltage 3.3
+
+temperature_Temperature measurement(float celsius);
+double readTemperature();
+
+//Temperature sensor (TMP36) definitions.
+int tempPin = A7;
+double voltage;
+double celsius;
+int tempReading;
+
+
+// Raspberry Pi
 IPAddress server(10,0,1,5);
 int port = 5000;
+TCPClient client;
+
+// Used to send temperature data
+uint8_t buffer[512];
+size_t temp_length;
+bool status;
 
 void setup()
 {
@@ -32,8 +54,42 @@ void loop()
     }
   }
 
-  Serial.println("Sending data");
+  celsius = readTemperature();
+  temperature_Temperature current_temperature = measurement(celsius);
+  pb_ostream_t stream = pb_ostream_from_buffer(buffer, sizeof(buffer));
+  status = pb_encode(&stream, temperature_Temperature_fields,
+                       &current_temperature);
+  temp_length = stream.bytes_written;
 
-  client.println('Hello Coo chee');
-  
+  if (!status) {
+    Serial.print("Encoding failed: ");
+    Serial.println(PB_GET_ERROR(&stream));
+   }
+   else {
+     Serial.print("Sending temperature data: ");
+     Serial.print(current_temperature.celsius);
+     Serial.print(", ");
+     Serial.println((long) current_temperature.timestamp);
+     client.write(buffer, temp_length);
+   }
+
+  client.flush();
+
+}
+
+temperature_Temperature measurement(float celsius) {
+  temperature_Temperature datapoint = temperature_Temperature_init_zero;
+  datapoint.timestamp = (unsigned)time(NULL);
+  datapoint.celsius = celsius;
+  return datapoint;
+}
+
+double readTemperature() {double voltage;
+double celsius;
+int tempReading;
+  tempReading = analogRead(tempPin);
+  voltage = tempReading * aref_voltage;
+  voltage /= 4095.0;
+  celsius = (voltage - 0.5) * 100;
+  return celsius;
 }
