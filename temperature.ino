@@ -10,7 +10,7 @@
 #define aref_voltage 3.3
 
 temperature_Temperature measurement(float celsius);
-double readTemperature();
+void readTemperature(double &celsius);
 
 //Temperature sensor (TMP36) definitions.
 int tempPin = A7;
@@ -56,7 +56,7 @@ void loop()
     }
   }
 
-  celsius = readTemperature();
+  readTemperature(celsius);
   temperature_Temperature current_temperature = measurement(celsius);
   pb_ostream_t stream = pb_ostream_from_buffer(buffer, sizeof(buffer));
   status = pb_encode(&stream, temperature_Temperature_fields,
@@ -88,12 +88,9 @@ temperature_Temperature measurement(float celsius) {
   return datapoint;
 }
 
-double readTemperature() {double voltage;
-double celsius;
-int tempReading;
+void readTemperature(double &celsius) {
   tempReading = analogRead(tempPin);
   voltage = tempReading * aref_voltage;
   voltage /= 4095.0;
   celsius = (voltage - 0.5) * 100;
-  return celsius;
 }
