@@ -5,6 +5,8 @@
 #include "pb_decode.h"
 #include "temperature.pb.h"
 
+#include <inttypes.h>
+
 #define aref_voltage 3.3
 
 temperature_Temperature measurement(float celsius);
@@ -69,7 +71,7 @@ void loop()
      Serial.print("Sending temperature data: ");
      Serial.print(current_temperature.celsius);
      Serial.print(", ");
-     Serial.println((long) current_temperature.timestamp);
+     Serial.printf("%lld \n", current_temperature.timestamp);
      client.write(buffer, temp_length);
    }
 
@@ -79,6 +81,8 @@ void loop()
 
 temperature_Temperature measurement(float celsius) {
   temperature_Temperature datapoint = temperature_Temperature_init_zero;
+  // This does not work at the moment - no hardware clock. Placeholder until
+  // I get an external clock.
   datapoint.timestamp = (unsigned)time(NULL);
   datapoint.celsius = celsius;
   return datapoint;
