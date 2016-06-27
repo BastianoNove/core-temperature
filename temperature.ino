@@ -1,16 +1,18 @@
 #include <stdio.h>
 #include <unistd.h>
 
+#include "temperature.pb.h"
 #include "pb_encode.h"
 #include "pb_decode.h"
-#include "temperature.pb.h"
 
 #include <inttypes.h>
 
 #define aref_voltage 3.3
 
-temperature_Temperature measurement(float celsius);
+void measurement(float celsius, temperature_Temperature &datapoint);
 void readTemperature(double &celsius);
+
+temperature_Temperature datapoint = temperature_Temperature_init_zero;
 
 //Temperature sensor (TMP36) definitions.
 int tempPin = A7;
@@ -57,10 +59,10 @@ void loop()
   }
 
   readTemperature(celsius);
-  temperature_Temperature current_temperature = measurement(celsius);
+  measurement(celsius, datapoint);
   pb_ostream_t stream = pb_ostream_from_buffer(buffer, sizeof(buffer));
   status = pb_encode(&stream, temperature_Temperature_fields,
-                       &current_temperature);
+                       &datapoint);
   temp_length = stream.bytes_written;
 
   if (!status) {
@@ -69,9 +71,9 @@ void loop()
    }
    else {
      Serial.print("Sending temperature data: ");
-     Serial.print(current_temperature.celsius);
+     Serial.print(datapoint.celsius);
      Serial.print(", ");
-     Serial.printf("%lld \n", current_temperature.timestamp);
+     Serial.printf("%lld \n", datapoint.timestamp);
      client.write(buffer, temp_length);
    }
 
@@ -79,13 +81,11 @@ void loop()
 
 }
 
-temperature_Temperature measurement(float celsius) {
-  temperature_Temperature datapoint = temperature_Temperature_init_zero;
+ void measurement(float celsius, temperature_Temperature &datapoint) {
   // This does not work at the moment - no hardware clock. Placeholder until
   // I get an external clock.
   datapoint.timestamp = (unsigned)time(NULL);
   datapoint.celsius = celsius;
-  return datapoint;
 }
 
 void readTemperature(double &celsius) {
