@@ -5,8 +5,6 @@
 #include "pb_encode.h"
 #include "pb_decode.h"
 
-#include <inttypes.h>
-
 #define aref_voltage 3.3
 
 void measurement(float celsius, temperature_Temperature &datapoint);
