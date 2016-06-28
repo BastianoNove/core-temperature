@@ -42,11 +42,11 @@ void setup()
 
 void loop()
 {
-  delay(5000);
+  delay(10000);
 
   while (!client.connected()) {
 
-    delay(2000);
+    delay(5000);
     Serial.println("Attempting connection");
     if (client.connect(server, port))
     {
@@ -76,7 +76,6 @@ void loop()
    }
 
   client.flush();
-
 }
 
  void measurement(float celsius, temperature_Temperature &datapoint) {
